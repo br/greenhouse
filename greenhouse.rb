@@ -4,7 +4,7 @@ BASE_AMI = "ami-a66723ce"
 DOCKER_SOLUTION_STACK = "64bit Amazon Linux 2014.09 v1.0.11 running Docker 1.3.3"
 DOCKERHUB_EMAIL = "felix.a.rod@gmail.com"
 DOCKERHUB_USER = "feelobot"
-DOCKERHUB_PASS = 
+DOCKERHUB_PASS = ""
 
 script2 =  '#!/bin/bash' +
           'docker login -e #{DOCKERHUB_EMAIL} -u #{DOCKERHUB_USER} -p #{DOCKERHUB_PASS}' + 
