@@ -1,71 +1,87 @@
 require 'aws-sdk'
+require 'sinatra'
+require 'json'
 
-BASE_AMI = "ami-a66723ce"
 DOCKER_SOLUTION_STACK = "64bit Amazon Linux 2014.09 v1.0.11 running Docker 1.3.3"
-DOCKERHUB_EMAIL = "felix.a.rod@gmail.com"
-DOCKERHUB_USER = "feelobot"
-DOCKERHUB_PASS = 
-
-script2 =  '#!/bin/bash' +
-          'docker login -e #{DOCKERHUB_EMAIL} -u #{DOCKERHUB_USER} -p #{DOCKERHUB_PASS}' + 
-          'docker pull bleacher/#{repo}/:#{latest_tag}'
 
 Aws.config[:credentials]
 
+post '/create/instances' do
+  content_type :json
+  result = {}
+  data = JSON.parse(request.body.read) 
+  repos = data["repos"]
+  base_ami = data["base_ami"]
+  repos.each do | repo |
+    tag = get_latest_tag(repo)
+    ami_instance = create_instance(repo, tag, base_ami)
+    result.merge!(repo.to_sym => ami_instance)
+  end
+ result.to_json
+end
 
-repo = "cms"
-latest_tag = "br-master-cc680b3"
+post '/create/ami/' do
+ create_ami(params)
+end
 
-script = %Q(
-#cloud-config
-repo_update: true
-repo_upgrade: all
-output : { all : '| tee -a /var/log/cloud-init-output.log' }
+def create_instance repo, tag, base_ami
+  ec2 = Aws::EC2::Resource.new
+  instances = ec2.create_instances(
+    :max_count => 1,
+    :min_count => 1,
+    :key_name => "feelobot",
+    :instance_type => "m3.medium",
+    :dry_run => false,
+    :image_id => base_ami, 
+    :user_data => Base64.encode64(script(repo,tag))
+  )
+  instances.map(&:id).first
+end
 
-runcmd:
- - docker login -e #{DOCKERHUB_EMAIL} -u #{DOCKERHUB_USER} -p #{DOCKERHUB_PASS}'
- - docker pull bleacher/#{repo}/:#{latest_tag}
-)
+def create_ami params
+  instance_id = params[:instance_id]
+  tag = params[:tag]
+  repo = params[:repo]
+  resp = ec2.create_image(
+    dry_run: true,
+    # required
+    instance_id: instance_id,
+    # required
+    name: "#{repo}-#{tag}-ami-#{Time.now}",
+    description: "Baked AMI",
+    no_reboot: true,
+    block_device_mappings: [
+      {
+        virtual_name: "String",
+        device_name: "String",
+        ebs: {
+          snapshot_id: "#{repo}-#{tag}-ebs-#{Time.now}",
+          volume_size: 30,
+          delete_on_termination: false,
+        }
+      }
+    ]
+  )
+  puts resp
+end
 
-ec2 = Aws::EC2::Resource.new
-instances = ec2.create_instances(
-  :max_count => 1,
-  :min_count => 1,
-  :key_name => "feelobot",
-  :instance_type => "m3.medium",
-  :dry_run => false,
-  :image_id => BASE_AMI,
-  :user_data => Base64.encode64(script)
-)
-
-puts ec2.inspect
+def script repo,tag
+<<-eos
+#!/bin/bash
+echo "whoami in pwd" >/tmp/echolog
+EC2_INSTANCE_ID="`wget -q -O - http://169.254.169.254/latest/meta-data/instance-id || die \"wget instance-id has failed: $?\"`"
+test -n "$EC2_INSTANCE_ID" || die 'cannot obtain instance-id'
+### PULL FROM DOCKER HUB
+docker login -e #{ENV['DOCKER_EMAIL']} -u #{ENV['DOCKER_USER']} -p #{ENV['DOCKER_PASS']}
+docker pull bleacher/#{repo}:#{tag}
 ### PULL FROM QUAY ALSO
-#docker login -e #{QUAY_EMAIL} -u #{QUAY_USER} -p #{QUAY_PASS}
+#docker login -e #{ENV['QUAY_EMAIL']} -u #{ENV['QUAY_USER']} -p #{ENV['QUAY_PASS']}
 #docker pull quay.io/bleacherreport/#{repo}
-##### TEMPLATE FOR CREATING A NEW AMI IMAGE
-=begin
-resp = ec2.create_image(
-  dry_run: true,
-  # required
-  instance_id: "String",
-  # required
-  name: "String",
-  description: "String",
-  no_reboot: true,
-  block_device_mappings: [
-    {
-      virtual_name: "String",
-      device_name: "String",
-      ebs: {
-        snapshot_id: "String",
-        volume_size: 1,
-        delete_on_termination: true,
-        volume_type: "standard|io1|gp2",
-        iops: 1,
-        encrypted: true,
-      },
-      no_device: "String",
-    },
-  ],
-)
-=end
+### START CREATING AMI
+curl -X POST rubyserver.com/create/ami?repo=#{repo}&tag=#{tag}&instance_id=$EC2_INSTANCE_ID
+eos
+end
+
+def get_latest_tag repo
+  "br-eb-880b705"
+end
