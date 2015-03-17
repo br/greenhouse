@@ -3,7 +3,6 @@ require 'sinatra'
 require 'json'
 
 DOCKER_SOLUTION_STACK = "64bit Amazon Linux 2014.09 v1.0.11 running Docker 1.3.3"
-
 Aws.config[:credentials]
 
 post '/create/instances' do
@@ -77,6 +76,7 @@ docker pull bleacher/#{repo}:#{tag}
 ### PULL FROM QUAY ALSO
 #docker login -e #{ENV['QUAY_EMAIL']} -u #{ENV['QUAY_USER']} -p #{ENV['QUAY_PASS']}
 #docker pull quay.io/bleacherreport/#{repo}
+<<<<<<< HEAD
 ### START CREATING AMI
 curl -X POST rubyserver.com/create/ami?repo=#{repo}&tag=#{tag}&instance_id=$EC2_INSTANCE_ID
 eos
