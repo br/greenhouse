@@ -68,7 +68,7 @@ def script repo,tag
 <<-eos
 #!/bin/bash
 echo "whoami in pwd" >/tmp/echolog
-EC2_INSTANCE_ID="`wget -q -O - http://169.254.169.254/latest/meta-data/instance-id || die \"wget instance-id has failed: $?\"`"
+EC2_INSTANCE_ID=$(cat var/lib/cloud/data/instance-id)
 test -n "$EC2_INSTANCE_ID" || die 'cannot obtain instance-id'
 ### PULL FROM DOCKER HUB
 docker login -e #{ENV['DOCKER_EMAIL']} -u #{ENV['DOCKER_USER']} -p #{ENV['DOCKER_PASS']}
@@ -76,7 +76,6 @@ docker pull bleacher/#{repo}:#{tag}
 ### PULL FROM QUAY ALSO
 #docker login -e #{ENV['QUAY_EMAIL']} -u #{ENV['QUAY_USER']} -p #{ENV['QUAY_PASS']}
 #docker pull quay.io/bleacherreport/#{repo}
-<<<<<<< HEAD
 ### START CREATING AMI
 curl -X POST rubyserver.com/create/ami?repo=#{repo}&tag=#{tag}&instance_id=$EC2_INSTANCE_ID
 eos
