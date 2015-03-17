@@ -69,7 +69,6 @@ def script repo,tag
 #!/bin/bash
 echo "whoami in pwd" >/tmp/echolog
 EC2_INSTANCE_ID=$(cat var/lib/cloud/data/instance-id)
-test -n "$EC2_INSTANCE_ID" || die 'cannot obtain instance-id'
 ### PULL FROM DOCKER HUB
 docker login -e #{ENV['DOCKER_EMAIL']} -u #{ENV['DOCKER_USER']} -p #{ENV['DOCKER_PASS']}
 docker pull bleacher/#{repo}:#{tag}
