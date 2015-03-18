@@ -24,7 +24,7 @@ post '/create/ami' do
 end
 
 get '/up/elb' do
- puts "OK"
+ "OK"
 end
 
 def create_instance repo, tag, base_ami
