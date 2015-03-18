@@ -19,8 +19,12 @@ post '/create/instances' do
  result.to_json
 end
 
-post '/create/ami/' do
+post '/create/ami' do
  create_ami(params)
+end
+
+get '/up/elb' do
+ puts "OK"
 end
 
 def create_instance repo, tag, base_ami
