@@ -5,12 +5,14 @@ require 'json'
 DOCKER_SOLUTION_STACK = "64bit Amazon Linux 2014.09 v1.0.11 running Docker 1.3.3"
 Aws.config[:credentials]
 
+
 post '/create/instances' do
   content_type :json
   result = {}
-  data = JSON.parse(request.body.read) 
-  repos = data["repos"]
-  base_ami = data["base_ami"]
+  repos_string = params['repos']
+  repos = repos_string.split(",")
+  puts repos
+  base_ami = params['base_ami']
   repos.each do | repo |
     tag = get_latest_tag(repo)
     ami_instance = create_instance(repo, tag, base_ami)
