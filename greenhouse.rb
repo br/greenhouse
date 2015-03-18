@@ -29,10 +29,16 @@ def create_instance repo, tag, base_ami
     :max_count => 1,
     :min_count => 1,
     :key_name => "feelobot",
-    :instance_type => "m3.medium",
-    :dry_run => false,
+    :instance_type => "m1.small",
+    :dry_run => dry?,
     :image_id => base_ami, 
     :user_data => Base64.encode64(script(repo,tag))
+  )
+  instances.first.create_tags(
+    :tags => [{
+      key: "Build Role",
+      value: "greenhouse_#{repo}",
+   }]
   )
   instances.map(&:id).first
 end
@@ -42,7 +48,7 @@ def create_ami params
   tag = params[:tag]
   repo = params[:repo]
   resp = ec2.create_image(
-    dry_run: true,
+    dry_run: dry?,
     # required
     instance_id: instance_id,
     # required
@@ -55,7 +61,6 @@ def create_ami params
         device_name: "String",
         ebs: {
           snapshot_id: "#{repo}-#{tag}-ebs-#{Time.now}",
-          volume_size: 30,
           delete_on_termination: false,
         }
       }
@@ -68,18 +73,19 @@ def script repo,tag
 <<-eos
 #!/bin/bash
 echo "whoami in pwd" >/tmp/echolog
-EC2_INSTANCE_ID=$(cat var/lib/cloud/data/instance-id)
-### PULL FROM DOCKER HUB
-docker login -e #{ENV['DOCKER_EMAIL']} -u #{ENV['DOCKER_USER']} -p #{ENV['DOCKER_PASS']}
-docker pull bleacher/#{repo}:#{tag}
-### PULL FROM QUAY ALSO
+docker login -e #{ENV['DOCKER_EMAIL']} -u #{ENV['DOCKER_USER']} -p #{ENV['DOCKER_PASS']} &> /tmp/dockerlog
+docker pull bleacher/#{repo}:#{tag}  &> /tmp/dockerlog
 #docker login -e #{ENV['QUAY_EMAIL']} -u #{ENV['QUAY_USER']} -p #{ENV['QUAY_PASS']}
 #docker pull quay.io/bleacherreport/#{repo}
 ### START CREATING AMI
-curl -X POST rubyserver.com/create/ami?repo=#{repo}&tag=#{tag}&instance_id=$EC2_INSTANCE_ID
+export EC2_INSTANCE_ID=$(cat /var/lib/cloud/data/instance-id)
 eos
 end
 
 def get_latest_tag repo
-  "br-eb-880b705"
+  "br-master-fb84878"
+end
+
+def dry?
+  ENV['DRY'] ? true : false
 end
