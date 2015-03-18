@@ -1,0 +1,17 @@
+{
+  "AWSEBDockerrunVersion": "1",
+  "Image": {
+    "Name": "bleacher/greenhouse:latest",
+    "Update": true
+  },
+  "Logging": "/var/log/nginx",
+  "Ports": [
+    {
+      "ContainerPort": "80"
+    }
+  ],
+  "Authentication": {
+    "Bucket": "frodriguez-docker-cfgs",
+    "Key": "frodriguez.dockercfg"
+  }
+}
