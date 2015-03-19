@@ -6,7 +6,12 @@ require 'json'
 DOCKER_SOLUTION_STACK = "64bit Amazon Linux 2014.09 v1.0.11 running Docker 1.3.3"
 Aws.config[:credentials]
 
-before do
+set(:method) do |method|
+  method = method.to_s.upcase
+  condition { request.request_method == method }
+end
+
+before :method => :post do
   error 401 unless params[:token] == ENV['TOKEN']
 end
 
