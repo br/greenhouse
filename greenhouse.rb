@@ -12,7 +12,6 @@ set(:method) do |method|
 end
 
 before :method => :post do
-  puts params['token']
   error 401 unless params['token'] == ENV['TOKEN']
 end
 
@@ -42,10 +41,15 @@ end
 post '/cleanup/instances' do
   ec2 = Aws::EC2::Client.new
   instances = get_stale_build_instances
-  ec2.terminate_instances(
-    dry_run: false,
-    instance_ids: instances 
-  )
+  if instances.any?
+    ec2.terminate_instances(
+      dry_run: false,
+      instance_ids: instances 
+    )
+    "{ 'terminated': #{instances} }"
+  else
+    200
+  end
 end
 
 def create_instance repo, tag, base_ami
@@ -125,6 +129,10 @@ def get_stale_build_instances
         name: "tag-key",
         values: [params["tag_key"]],
       },
+      {
+        name: "instance-state-code",
+        values: ["16"]
+      }
     ]
   )
   instances = stale_build_instances[:reservations].map(&:instances)
