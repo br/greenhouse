@@ -12,7 +12,8 @@ set(:method) do |method|
 end
 
 before :method => :post do
-  error 401 unless params[:token] == ENV['TOKEN']
+  puts params['token']
+  error 401 unless params['token'] == ENV['TOKEN']
 end
 
 post '/create/instances' do
