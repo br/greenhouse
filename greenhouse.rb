@@ -6,6 +6,9 @@ require 'json'
 DOCKER_SOLUTION_STACK = "64bit Amazon Linux 2014.09 v1.0.11 running Docker 1.3.3"
 Aws.config[:credentials]
 
+before do
+  error 401 unless params[:token] == ENV['TOKEN']
+end
 
 post '/create/instances' do
   content_type :json
@@ -107,6 +110,7 @@ def dry?
 end
 
 def get_stale_build_instances 
+  params["tag_key"] ||= "Build Role"
   ec2 = Aws::EC2::Client.new
   stale_build_instances = ec2.describe_instances(
     dry_run: dry?,
