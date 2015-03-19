@@ -1,3 +1,4 @@
+require 'pp'
 require 'aws-sdk'
 require 'sinatra'
 require 'json'
@@ -27,6 +28,15 @@ end
 
 get '/up/elb' do
  "OK"
+end
+
+post '/cleanup/instances' do
+  ec2 = Aws::EC2::Client.new
+  instances = get_stale_build_instances
+  ec2.terminate_instances(
+    dry_run: false,
+    instance_ids: instances 
+  )
 end
 
 def create_instance repo, tag, base_ami
@@ -94,4 +104,30 @@ end
 
 def dry?
   ENV['DRY'] ? true : false
+end
+
+def get_stale_build_instances 
+  ec2 = Aws::EC2::Client.new
+  stale_build_instances = ec2.describe_instances(
+    dry_run: dry?,
+    filters: [
+      {
+        name: "tag-key",
+        values: [params["tag_key"]],
+      },
+    ]
+  )
+  instances = stale_build_instances[:reservations].map(&:instances)
+  stale_instances = []
+  instances.each do |instance|
+    if time_diff(instance[0][:launch_time]) > 1
+      stale_instances << instance[0][:instance_id]
+    end
+  end
+  stale_instances
+end
+
+def time_diff launch_time
+  params[:time] ||= "3600"
+  ((Time.now.utc - launch_time) / params['time'].to_i).round
 end
