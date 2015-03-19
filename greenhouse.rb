@@ -31,11 +31,12 @@ post '/create/instances' do
 end
 
 post '/create/ami' do
- create_ami(params)
+  create_ami(params)
+  200
 end
 
 get '/up/elb' do
- "OK"
+  "OK"
 end
 
 post '/cleanup/instances' do
@@ -73,27 +74,19 @@ def create_instance repo, tag, base_ami
 end
 
 def create_ami params
+  ec2 = Aws::EC2::Client.new
   instance_id = params[:instance_id]
   tag = params[:tag]
   repo = params[:repo]
+  time = Time.now.strftime("%m-%d-%Y-%I-%M%p")
   resp = ec2.create_image(
     dry_run: dry?,
     # required
     instance_id: instance_id,
     # required
-    name: "#{repo}-#{tag}-ami-#{Time.now}",
+    name: "#{repo}-#{tag}-ami-#{time}",
     description: "Baked AMI",
     no_reboot: true,
-    block_device_mappings: [
-      {
-        virtual_name: "String",
-        device_name: "String",
-        ebs: {
-          snapshot_id: "#{repo}-#{tag}-ebs-#{Time.now}",
-          delete_on_termination: false,
-        }
-      }
-    ]
   )
   puts resp
 end
@@ -108,6 +101,7 @@ docker pull bleacher/#{repo}:#{tag}  &> /tmp/dockerlog
 #docker pull quay.io/bleacherreport/#{repo}
 ### START CREATING AMI
 export EC2_INSTANCE_ID=$(cat /var/lib/cloud/data/instance-id)
+curl -X POST -F instance_id=$EC2_INSTANCE_ID -F tag=#{tag} -F repo=#{repo} -F token=#{ENV['TOKEN']} http://greenhouse.bleacherreport/create/ami
 eos
 end
 
