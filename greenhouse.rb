@@ -101,7 +101,7 @@ docker pull #{ENV['DOCKER_ACCOUNT']}/#{repo}:#{tag}  &> /tmp/dockerlog
 #docker pull quay.io/bleacherreport/#{repo}
 ### START CREATING AMI
 export EC2_INSTANCE_ID=$(cat /var/lib/cloud/data/instance-id)
-curl -X POST -F instance_id=$EC2_INSTANCE_ID -F tag=#{tag} -F repo=#{repo} -F token=#{ENV['TOKEN']} http://greenhouse.bleacherreport.com/create/ami &> /tmp/ami-log
+curl -X POST -F instance_id=$EC2_INSTANCE_ID -F tag=#{tag} -F repo=#{repo} -F token=#{ENV['TOKEN']} #{ENV['GREENHOUSE_URL']}/create/ami &> /tmp/ami-log
 eos
 end
 
