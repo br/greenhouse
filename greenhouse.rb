@@ -96,7 +96,7 @@ def script repo,tag
 #!/bin/bash
 echo "whoami in pwd" >/tmp/echolog
 docker login -e #{ENV['DOCKER_EMAIL']} -u #{ENV['DOCKER_USER']} -p #{ENV['DOCKER_PASS']} &> /tmp/dockerlog
-docker pull bleacher/#{repo}:#{tag}  &> /tmp/dockerlog
+docker pull #{ENV['DOCKER_ACCOUNT']}/#{repo}:#{tag}  &> /tmp/dockerlog
 #docker login -e #{ENV['QUAY_EMAIL']} -u #{ENV['QUAY_USER']} -p #{ENV['QUAY_PASS']}
 #docker pull quay.io/bleacherreport/#{repo}
 ### START CREATING AMI
