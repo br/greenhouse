@@ -101,7 +101,7 @@ docker pull bleacher/#{repo}:#{tag}  &> /tmp/dockerlog
 #docker pull quay.io/bleacherreport/#{repo}
 ### START CREATING AMI
 export EC2_INSTANCE_ID=$(cat /var/lib/cloud/data/instance-id)
-curl -X POST -F instance_id=$EC2_INSTANCE_ID -F tag=#{tag} -F repo=#{repo} -F token=#{ENV['TOKEN']} http://greenhouse.bleacherreport/create/ami &> /tmp/ami-log
+curl -X POST -F instance_id=$EC2_INSTANCE_ID -F tag=#{tag} -F repo=#{repo} -F token=#{ENV['TOKEN']} http://greenhouse.bleacherreport.com/create/ami &> /tmp/ami-log
 eos
 end
 
@@ -141,5 +141,5 @@ end
 
 def time_diff launch_time
   params[:time] ||= "3600"
-  ((Time.now.utc - launch_time) / params['time'].to_i).round
+  ((Time.now.utc - launch_time) / params['time'].to_i)
 end
