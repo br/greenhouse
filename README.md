@@ -2,13 +2,21 @@
 Set the following environment variables:
 
 AWS_ACCESS_KEY_ID
+
 AWS_SECRET_ACCESS_KEY
+
 AWS_REGION
+
 DOCKER_EMAIL
+
 DOCKER_USER
+
 DOCKER_PASS
+
 DOCKER_ACCOUNT
+
 TOKEN
+
 RACK_ENV
 
 #### Setup a Runscope Scheduler
