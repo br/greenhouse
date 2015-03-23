@@ -15,12 +15,15 @@ before :method => :post do
   error 401 unless params['token'] == ENV['TOKEN']
 end
 
+get '/up/elb' do
+  "OK"
+end
+
 post '/create/instances' do
   content_type :json
   result = {}
   repos_string = params['repos']
   repos = repos_string.split(",")
-  puts repos
   base_ami = params['base_ami']
   repos.each do | repo |
     tag = get_latest_tag(repo)
@@ -35,10 +38,6 @@ post '/create/ami' do
   200
 end
 
-get '/up/elb' do
-  "OK"
-end
-
 post '/cleanup/instances' do
   ec2 = Aws::EC2::Client.new
   instances = get_stale_build_instances
@@ -51,6 +50,10 @@ post '/cleanup/instances' do
   else
     200
   end
+end
+
+post '/cleanup/images' do
+  
 end
 
 def create_instance repo, tag, base_ami
@@ -106,7 +109,16 @@ eos
 end
 
 def get_latest_tag repo
-  "br-master-fb84878"
+  eb = Aws::ElasticBeanstalk::Client.new
+  resp = eb.describe_application_versions(
+    application_name: repo,
+  )
+  label = resp["application_versions"].select {|version| version["version_label"].include?("br-master") }.last
+  if label
+    label["version_label"].split("-")[0..2].join('-')
+  else
+    raise "No Master Tags Deployed, Check Application Versions Page for Versions Starting with 'br-master-'"
+  end
 end
 
 def dry?
