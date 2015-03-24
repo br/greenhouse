@@ -118,8 +118,8 @@ def get_latest_tag repo
   if label
     label["version_label"].split("-")[0..2].join('-')
   else
-    puts resp["application_versions"].inspect
-    raise "No Master Tags Deployed, Check Application Versions Page for Versions Starting with 'br-master-'"
+    raise "No Master Tags Deployed:\n #{resp["application_versions"].inspect}"
+    500
   end
 end
 
