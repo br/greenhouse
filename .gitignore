@@ -1,5 +1,6 @@
 *.swp
 *.DS_STORE
+log/*
 
 # Elastic Beanstalk Files
 .elasticbeanstalk/*

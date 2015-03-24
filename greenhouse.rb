@@ -1,6 +1,7 @@
 require 'pp'
 require 'aws-sdk'
 require 'sinatra'
+require 'newrelic_rpm'
 require 'json'
 
 DOCKER_SOLUTION_STACK = "64bit Amazon Linux 2014.09 v1.0.11 running Docker 1.3.3"
@@ -117,6 +118,7 @@ def get_latest_tag repo
   if label
     label["version_label"].split("-")[0..2].join('-')
   else
+    puts resp["application_versions"].inspect
     raise "No Master Tags Deployed, Check Application Versions Page for Versions Starting with 'br-master-'"
   end
 end
