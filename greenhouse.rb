@@ -4,7 +4,6 @@ require 'sinatra'
 require 'newrelic_rpm'
 require 'json'
 
-DOCKER_SOLUTION_STACK = "64bit Amazon Linux 2014.09 v1.0.11 running Docker 1.3.3"
 Aws.config[:credentials]
 
 set(:method) do |method|
@@ -54,7 +53,9 @@ post '/cleanup/instances' do
 end
 
 post '/cleanup/images' do
-  
+  @ec2 = Aws::EC2::Client.new
+  amis = get_greenhouse_amis
+  delete_stale_amis amis 
 end
 
 def create_instance repo, tag, base_ami
@@ -88,7 +89,7 @@ def create_ami params
     # required
     instance_id: instance_id,
     # required
-    name: "#{repo}-#{tag}-ami-#{time}",
+    name: "greenhouse-#{repo}-#{tag}-ami-#{time}",
     description: "Baked AMI",
     no_reboot: true,
   )
@@ -145,8 +146,9 @@ def get_stale_build_instances
   )
   instances = stale_build_instances[:reservations].map(&:instances)
   stale_instances = []
+  params[:time] ||= "1"
   instances.each do |instance|
-    if time_diff(instance[0][:launch_time]) > 1
+    if time_diff(instance[0][:launch_time]) > params[:time].to_i
       stale_instances << instance[0][:instance_id]
     end
   end
@@ -154,6 +156,37 @@ def get_stale_build_instances
 end
 
 def time_diff launch_time
-  params[:time] ||= "3600"
-  ((Time.now.utc - launch_time) / params['time'].to_i)
+  ((Time.now.utc - launch_time) / 3600)
+end
+
+def get_greenhouse_amis
+  amis = @ec2.describe_images(filters: [{ name: "description", values: ["Baked AMI"] }])[:images]
+  amis.map(&:image_id)
+end
+
+def delete_stale_amis amis
+  amis.each do |id|
+    if ami_unattached_to_instance(id) && ami_stale(id)
+      delete_ami(id)
+    end
+  end
+end
+    
+def ami_unattached_to_instance id
+  @ec2.describe_instances(filters: [{ name: "image-id", values: [ id ]}])[:reservations].empty?
+end
+
+def ami_stale id
+  params[:time] ||= "6"
+  date =  @ec2.describe_images(image_ids: [ id ])[:images].first[:creation_date]
+  time_diff(Time.parse(date)) > params[:time].to_i ? true : false
+end 
+
+def delete_ami id
+  puts "Deregestering #{id}"
+  @ec2.deregister_image(
+  dry_run: dry?,
+  # required
+  image_id: id,
+)
 end

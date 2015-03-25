@@ -1,5 +1,5 @@
 FROM ruby:2.1
-RUN apt-get update && apt-get install -y postgresql postgresql-server-dev-all
+RUN apt-get update && apt-get install -y postgresql postgresql-server-dev-all vim
 
 ADD ./Gemfile Gemfile
 ADD ./Gemfile.lock Gemfile.lock
