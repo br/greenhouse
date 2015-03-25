@@ -59,11 +59,12 @@ post '/cleanup/images' do
 end
 
 def create_instance repo, tag, base_ami
+  ENV['AWS_KEYPAIR'] ||= "default"
   ec2 = Aws::EC2::Resource.new
   instances = ec2.create_instances(
     :max_count => 1,
     :min_count => 1,
-    :key_name => "feelobot",
+    :key_name => ENV['AWS_KEYPAIR'],
     :instance_type => "m1.small",
     :dry_run => dry?,
     :image_id => base_ami, 
@@ -165,11 +166,14 @@ def get_greenhouse_amis
 end
 
 def delete_stale_amis amis
+  deleted_amis = []
   amis.each do |id|
     if ami_unattached_to_instance(id) && ami_stale(id)
       delete_ami(id)
+      deleted_amis << id
     end
   end
+  deleted_amis
 end
     
 def ami_unattached_to_instance id
