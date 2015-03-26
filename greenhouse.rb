@@ -3,7 +3,6 @@ require 'aws-sdk'
 require 'sinatra'
 require 'newrelic_rpm'
 require 'json'
-
 Aws.config[:credentials]
 
 set(:method) do |method|
@@ -12,7 +11,7 @@ set(:method) do |method|
 end
 
 before :method => :post do
-  error 401 unless params['token'] == ENV['TOKEN']
+  error 401 unless params['token'] == ENV['TOKEN'] || ENV['RACK_ENV'] == "test"
 end
 
 get '/up/elb' do
@@ -39,17 +38,16 @@ post '/create/ami' do
 end
 
 post '/cleanup/instances' do
+  content_type :json
   ec2 = Aws::EC2::Client.new
   instances = get_stale_build_instances
-  if instances.any?
+  if instances.any? && instances.length < 50
     ec2.terminate_instances(
       dry_run: false,
       instance_ids: instances 
-    )
-    "{ 'terminated': #{instances} }"
-  else
-    200
+    ) unless RACK_ENV="test"
   end
+  %Q({ "terminated": #{instances} })
 end
 
 post '/cleanup/images' do
@@ -137,7 +135,7 @@ def get_stale_build_instances
     filters: [
       {
         name: "tag-key",
-        values: [params["tag_key"]],
+        values: ["Build Role"],
       },
       {
         name: "instance-state-code",
