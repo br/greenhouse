@@ -98,14 +98,15 @@ end
 def script repo,tag
 <<-eos
 #!/bin/bash
+exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
 echo "whoami in pwd" >/tmp/echolog
-docker login -e #{ENV['DOCKER_EMAIL']} -u #{ENV['DOCKER_USER']} -p #{ENV['DOCKER_PASS']} &> /tmp/dockerlog
-docker pull #{ENV['DOCKER_ACCOUNT']}/#{repo}:#{tag}  &> /tmp/dockerlog
+docker login -e #{ENV['DOCKER_EMAIL']} -u #{ENV['DOCKER_USER']} -p #{ENV['DOCKER_PASS']}
+docker pull #{ENV['DOCKER_ACCOUNT']}/#{repo}:#{tag}
 #docker login -e #{ENV['QUAY_EMAIL']} -u #{ENV['QUAY_USER']} -p #{ENV['QUAY_PASS']}
 #docker pull quay.io/bleacherreport/#{repo}
 ### START CREATING AMI
 export EC2_INSTANCE_ID=$(cat /var/lib/cloud/data/instance-id)
-curl -X POST -F instance_id=$EC2_INSTANCE_ID -F tag=#{tag} -F repo=#{repo} -F token=#{ENV['TOKEN']} #{ENV['GREENHOUSE_URL']}/create/ami &> /tmp/ami-log
+curl -X POST -F instance_id=$EC2_INSTANCE_ID -F tag=#{tag} -F repo=#{repo} -F token=#{ENV['TOKEN']} #{ENV['GREENHOUSE_URL']}/create/ami
 eos
 end
 
