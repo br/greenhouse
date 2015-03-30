@@ -45,7 +45,7 @@ post '/cleanup/instances' do
     ec2.terminate_instances(
       dry_run: false,
       instance_ids: instances 
-    ) unless RACK_ENV="test"
+    )
   end
   %Q({ "terminated": #{instances} })
 end
@@ -147,7 +147,7 @@ def get_stale_build_instances
   instances = stale_build_instances[:reservations].map(&:instances)
   stale_instances = []
   params[:time] ||= "1"
-  instances.each_with_index do |instance, i|
+  instances.each do |instance|
     if time_diff(instance.map(&:launch_time).first) > params[:time].to_i
       stale_instances << instance.map(&:instance_id).first
     end
