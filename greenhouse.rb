@@ -146,9 +146,9 @@ def get_stale_build_instances
   instances = stale_build_instances[:reservations].map(&:instances)
   stale_instances = []
   params[:time] ||= "1"
-  instances.each do |instance|
-    if time_diff(instance[0][:launch_time]) > params[:time].to_i
-      stale_instances << instance[0][:instance_id]
+  instances.each_with_index do |instance, i|
+    if time_diff(instance.map(&:launch_time).first) > params[:time].to_i
+      stale_instances << instance.map(&:instance_id).first
     end
   end
   stale_instances
