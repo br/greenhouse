@@ -115,7 +115,7 @@ def get_latest_tag repo
   resp = eb.describe_application_versions(
     application_name: repo,
   )
-  label = resp["application_versions"].select {|version| version["version_label"].include?("br-master") }.last
+  label = resp["application_versions"].select {|version| version["version_label"].include?("br-master") }.first
   if label
     label["version_label"].split("-")[0..2].join('-')
   else
