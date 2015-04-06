@@ -6,3 +6,4 @@ gem 'guard-puma'
 gem 'rspec'
 gem 'newrelic_rpm'
 gem "rack-test", require: "rack/test"
+gem "rack-ssl"
