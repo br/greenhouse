@@ -3,6 +3,9 @@ require 'aws-sdk'
 require 'sinatra'
 require 'newrelic_rpm'
 require 'json'
+require 'rack/ssl'
+use Rack::SSL
+
 Aws.config[:credentials]
 
 set(:method) do |method|
